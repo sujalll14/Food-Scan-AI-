@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodscan AI · Deep Learning Nutrition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ----------------------------------------------
+      THEME VARIABLES & RESET
+    ----------------------------------------------- */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-base: #f4f8fb;
+      --bg-card: rgba(255, 255, 255, 0.85);
+      --bg-glass: rgba(255, 255, 255, 0.6);
+      --glass-border: rgba(0, 0, 0, 0.08);
+      --glass-highlight: rgba(255, 255, 255, 1);
+      --ink: #0f172a;
+      --ink-soft: #334155;
+      --ink-muted: #64748b;
+      --primary: #0ea5e9;
+      --primary-deep: #0284c7;
+      --primary-glow: rgba(14, 165, 233, 0.25);
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.25);
+      --success: #10b981;
+      --danger: #f43f5e;
+      --warning: #f59e0b;
+      --shadow-sm: 0 4px 15px -2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+      --radius-md: 1.5rem;
+      --radius-lg: 2rem;
+      --radius-xl: 3rem;
+      --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.dark-theme {
+      --bg-base: #020617;
+      --bg-card: rgba(15, 23, 42, 0.6);
+      --bg-glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-highlight: rgba(255, 255, 255, 0.15);
+      --ink: #f8fafc;
+      --ink-soft: #cbd5e1;
+      --ink-muted: #94a3b8;
+      --primary-glow: rgba(14, 165, 233, 0.4);
+      --accent-glow: rgba(139, 92, 246, 0.4);
+      --shadow-sm: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
+    }
+
+    body {
+      height: 100vh; background-color: var(--bg-base); font-family: 'Outfit', sans-serif;
+      color: var(--ink); overflow: hidden; position: relative; transition: background-color 0.5s ease, color 0.5s ease;
+    }
+
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); z-index: 0; animation: floatOrb 20s infinite ease-in-out alternate; transition: opacity 0.5s ease; }
+    body:not(.dark-theme) .orb { opacity: 0.4; filter: blur(100px); }
+    .orb-1 { width: 400px; height: 400px; background: var(--primary-glow); top: -100px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 500px; height: 500px; background: var(--accent-glow); bottom: -150px; right: -100px; animation-delay: -5s; }
+    .orb-3 { width: 300px; height: 300px; background: rgba(16, 185, 129, 0.2); top: 40%; left: 50%; transform: translate(-50%, -50%); animation-duration: 25s; }
+
+    @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.2); } }
+    .emerge { opacity: 0; transform: translateY(20px) scale(0.98); animation: emergeAnim 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes emergeAnim { to { opacity: 1; transform: translateY(0) scale(1); } }
+    .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; }
+
+    /* ----- APP LAYOUT ----- */
+    .app { display: flex; flex-direction: column; height: 100vh; padding: 20px; gap: 20px; position: relative; z-index: 1; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; padding: 12px 32px;
+      background: var(--bg-card); backdrop-filter: blur(30px); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl); box-shadow: var(--shadow-md); flex-shrink: 0;
+    }
+
+    .logo { display: flex; align-items: center; gap: 14px; }
+    .logo-mark { width: 44px; height: 44px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: white; box-shadow: 0 0 20px var(--primary-glow); }
+    .logo-name { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 800; background: linear-gradient(120deg, var(--ink), var(--primary-deep)); background-clip: text; color: transparent; letter-spacing: -0.5px; }
+    .logo-tag { font-size: 0.7rem; font-weight: 700; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; }
+
+    .tab-group { display: flex; gap: 8px; background: var(--bg-glass); border-radius: 50px; padding: 6px; border: 1px solid var(--glass-border); }
+    .tab-btn { padding: 10px 30px; border: none; background: transparent; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink-muted); cursor: pointer; border-radius: 50px; transition: var(--transition); display: flex; align-items: center; gap: 10px; }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.on { background: var(--bg-card); color: var(--ink); box-shadow: 0 4px 15px var(--shadow-sm); border: 1px solid var(--glass-highlight); }
+    .hist-count { min-width: 24px; height: 24px; background: rgba(128,128,128,0.2); border-radius: 30px; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; color: var(--ink); }
+    .tab-btn.on .hist-count { background: var(--primary); color: #fff; box-shadow: 0 0 10px var(--primary-glow); }
+
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .theme-btn { background: var(--bg-glass); border: 1px solid var(--glass-border); border-radius: 50px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; color: var(--ink); transition: var(--transition); }
+    .theme-btn:hover { background: var(--bg-card); transform: scale(1.05); }
+
+    .page-container { flex: 1; position: relative; overflow: hidden; }
+    .page { position: absolute; inset: 0; display: none; opacity: 0; transition: opacity 0.4s ease; overflow-y: auto; overflow-x: hidden; padding: 5px 5px 40px 0; }
+    .page.active { display: block; opacity: 1; z-index: 10; }
+    .page::-webkit-scrollbar { width: 8px; }
+    .page::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 20px; }
+
+    /* ----- 3-COLUMN SCAN GRID ----- */
+    .scan-grid { display: grid; grid-template-columns: 320px 1fr 320px; gap: 20px; align-items: start; min-height: 100%; }
+
+    .panel { background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-md); }
+    .panel-center { padding: 0; overflow: hidden; background: transparent; box-shadow: none; border: none; backdrop-filter: none; }
+
+    /* ----- INPUT CARDS (Left & Right) ----- */
+    .card { background: var(--bg-glass); border: 1px solid var(--glass-border); border-radius: var(--radius-md); transition: var(--transition); overflow: hidden; }
+    .card-hd { padding: 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.02); }
+    .card-hd .icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: var(--bg-card); border: 1px solid var(--glass-border); box-shadow: var(--shadow-sm); }
+    .card-hd h3 { font-size: 1.1rem; font-weight: 800; color: var(--ink); }
+    .card-hd p { font-size: 0.75rem; color: var(--ink-muted); }
+    .card-body { padding: 16px; }
+
+    /* Camera */
+    .cam-wrap { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; border: 1px solid var(--glass-border); }
+    video { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+    .cam-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.7); backdrop-filter: blur(8px); z-index: 2; }
+    .cam-idle .ci-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .radar-sweep { position: absolute; top: 0; left: 0; width: 100%; height: 20%; background: linear-gradient(to bottom, transparent, var(--primary-glow), var(--primary)); opacity: 0; border-bottom: 2px solid var(--primary-deep); z-index: 1; pointer-events: none; }
+    .radar-sweep.go { opacity: 0.6; animation: scanRadar 2s linear infinite; }
+    @keyframes scanRadar { 0% { top: -20%; } 100% { top: 100%; } }
+
+    /* Buttons */
+    .btn { padding: 12px 16px; border: none; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; }
+    .btn:active { transform: scale(0.96); }
+    .btn-hollow { background: var(--bg-glass); color: var(--ink); border: 1px solid var(--glass-border); }
+    .btn-hollow:hover { background: var(--bg-card); border-color: var(--primary); color: var(--primary-deep); }
+    .btn-action { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; box-shadow: 0 5px 15px var(--primary-glow); }
+    .btn-action:hover { box-shadow: 0 8px 25px var(--accent-glow); filter: brightness(1.1); }
+    .btn-action:disabled { background: var(--bg-glass); color: var(--ink-muted); border: 1px solid var(--glass-border); box-shadow: none; cursor: not-allowed; }
+
+    /* Dropzone */
+    .dz { border: 2px dashed var(--glass-highlight); border-radius: 12px; padding: 30px 16px; text-align: center; cursor: pointer; transition: var(--transition); background: var(--bg-glass); }
+    .dz:hover { border-color: var(--primary); background: var(--primary-glow); }
+    .dz-ico { font-size: 2rem; margin-bottom: 8px; }
+    .dz h4 { font-size: 0.95rem; color: var(--ink); font-weight: 700; }
+    .dz p { font-size: 0.75rem; color: var(--ink-muted); margin-top: 4px; }
+    .ti img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--glass-highlight); margin-top: 12px; }
+
+    /* ----- CENTER PANEL (RESULTS) ----- */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 450px; text-align: center; color: var(--ink-muted); padding: 40px; background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+    .es-icon { font-size: 4rem; margin-bottom: 20px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+
+    .result-hero { background: var(--bg-card); backdrop-filter: blur(20px); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); overflow: hidden; box-shadow: var(--shadow-md); height: 100%; display: flex; flex-direction: column; }
+    .rh-banner { height: 220px; width: 100%; object-fit: cover; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
+    .rh-body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+
+    .rh-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .rh-title { font-size: 2rem; font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: var(--ink); line-height: 1.1; margin-top: 4px; text-transform: capitalize; }
+    .conf-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: var(--success); padding: 6px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .macro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .m-box { background: var(--bg-glass); border-radius: 12px; padding: 16px 8px; text-align: center; border: 1px solid var(--glass-border); }
+    .m-val { font-size: 1.4rem; font-weight: 800; color: var(--ink); }
+    .m-lbl { font-size: 0.7rem; color: var(--ink-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+    .alt-box { background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(139, 92, 246, 0.05)); border: 1px solid var(--primary-glow); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+    .alt-hd { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: var(--primary-deep); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .alt-name { font-size: 1.1rem; font-weight: 800; color: var(--ink); }
+    .alt-desc { font-size: 0.85rem; color: var(--ink-soft); margin-top: 4px; }
+
+    /* ----- HISTORY PAGE ----- */
+    .dashboard-grid { display: flex; flex-direction: column; gap: 24px; }
+    .dash-header { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .stat-card { background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-md); }
+    .stat-info h4 { font-size: 0.8rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 700; }
+    .stat-info .val { font-size: 2rem; font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: var(--ink); }
+
+    .history-list { background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-md); min-height: 400px; }
+    .hl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .hl-header h3 { font-size: 1.4rem; font-family: 'Space Grotesk', sans-serif; color: var(--ink); font-weight: 800; }
+
+    .h-item { display: flex; align-items: center; gap: 20px; padding: 16px; border-radius: 16px; background: var(--bg-glass); border: 1px solid var(--glass-border); margin-bottom: 12px; transition: var(--transition); cursor: pointer; }
+    .h-item:hover { background: var(--bg-card); border-color: var(--primary); transform: translateX(8px); box-shadow: var(--shadow-sm); }
+    .h-thumb { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid var(--glass-border); }
+    .h-details { flex: 1; }
+    .h-name { font-size: 1.1rem; font-weight: 800; color: var(--ink); margin-bottom: 4px; text-transform: capitalize; }
+    .h-meta { font-size: 0.8rem; color: var(--ink-muted); display: flex; gap: 12px; font-weight: 500; }
+    .h-macros { display: flex; gap: 16px; text-align: right; }
+    .h-mac { display: flex; flex-direction: column; }
+    .hm-v { font-size: 1rem; font-weight: 800; color: var(--ink); }
+    .hm-l { font-size: 0.7rem; color: var(--ink-muted); text-transform: uppercase; font-weight: 600; }
+
+    @media (max-width: 1200px) { .scan-grid { grid-template-columns: 1fr; } .panel-center { order: -1; } }
+  </style>
+</head>
+<body class="dark-theme">
+
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+
+  <div class="app">
+
+    <header class="topbar emerge delay-1">
+      <div class="logo">
+        <div class="logo-mark">🧬</div>
+        <div><div class="logo-name">Foodscan AI</div><div class="logo-tag">CNN Nutrition Analysis</div></div>
+      </div>
+      <div class="tab-group">
+        <button class="tab-btn on" id="btn-scan" onclick="switchView('scan')">🔍 Scanner</button>
+        <button class="tab-btn" id="btn-hist" onclick="switchView('hist')">📊 Dashboard <span class="hist-count" id="histCount">0</span></button>
+      </div>
+      <div class="header-actions">
+        <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle Theme">☀️</button>
+      </div>
+    </header>
+
+    <div class="page-container">
+
+      <div id="page-scan" class="page active emerge delay-2">
+        <div class="scan-grid">
+
+          <div class="panel">
+            <div class="card">
+              <div class="card-hd"><div class="icon">📷</div><div><h3>Live Vision</h3><p>Camera feed</p></div></div>
+              <div class="card-body">
+                <div class="cam-wrap">
+                  <video id="vid" autoplay playsinline muted></video>
+                  <div class="radar-sweep" id="radar"></div>
+                  <div class="cam-idle" id="camIdle"><div class="ci-icon">👁️</div></div>
+                </div>
+                <canvas id="cv" style="display:none"></canvas>
+                <button class="btn btn-hollow" id="startBtn" onclick="startCam()">Start Camera</button>
+                <button class="btn btn-action" id="capBtn" onclick="doCapture()" disabled>Capture & Analyze</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-center" id="scanResultArea">
+            <div class="empty-state">
+              <div class="es-icon">🥗</div>
+              <h3>Awaiting Input tensors</h3>
+              <p>Use the camera on the left or upload an image on the right to classify food and calculate macros.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="card">
+              <div class="card-hd"><div class="icon">📁</div><div><h3>File Upload</h3><p>Saved images</p></div></div>
+              <div class="card-body">
+                <div class="dz" onclick="document.getElementById('fi').click()">
+                  <div class="dz-ico">🖼️</div><h4>Click to browse</h4><p>JPG, PNG up to 10MB</p>
+                </div>
+                <input id="fi" type="file" accept="image/*" style="display:none" onchange="handleUpload(this.files)">
+                <div class="ti" id="tg"></div>
+                <button class="btn btn-action" id="anaBtn" onclick="analyzeFile()" disabled>Run CNN Model</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="page-hist" class="page">
+        <div class="dashboard-grid">
+          <div class="dash-header">
+            <div class="stat-card"><div class="stat-info"><h4>Calories</h4><div class="val" id="st-cal">0</div></div></div>
+            <div class="stat-card"><div class="stat-info"><h4>Protein</h4><div class="val" id="st-pro">0g</div></div></div>
+            <div class="stat-card"><div class="stat-info"><h4>Carbs</h4><div class="val" id="st-car">0g</div></div></div>
+            <div class="stat-card"><div class="stat-info"><h4>Fat</h4><div class="val" id="st-fat">0g</div></div></div>
+          </div>
+          <div class="history-list">
+            <div class="hl-header">
+              <h3>Inference History</h3>
+              <button class="btn btn-hollow" style="width: auto;" onclick="clearHistory()">Purge Data</button>
+            </div>
+            <div id="historyLogs"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* --- Database for the 20 Food Classes --- */
+    const FOOD_DB = {
+      "apple_pie": { cal: 320, pro: 3, car: 45, fat: 15, alt: "Baked Apples with Cinnamon", why: "Eliminates pastry carbs/fats while keeping the sweet flavor." },
+      "caesar_salad": { cal: 470, pro: 10, car: 17, fat: 40, alt: "Kale Salad with Vinaigrette", why: "Swaps heavy mayo-based dressing for heart-healthy oils." },
+      "chocolate_cake": { cal: 350, pro: 4, car: 45, fat: 18, alt: "Dark Chocolate & Berries", why: "Rich in antioxidants with significantly lower refined sugar." },
+      "french_fries": { cal: 312, pro: 3, car: 41, fat: 15, alt: "Baked Sweet Potato Wedges", why: "Lower glycemic index and packed with Vitamin A." },
+      "fried_rice": { cal: 330, pro: 12, car: 45, fat: 12, alt: "Cauliflower Fried 'Rice'", why: "Cuts carb content by 80% while adding vegetable volume." },
+      "grilled_salmon": { cal: 280, pro: 28, car: 0, fat: 18, alt: "Poached Salmon", why: "Cooking without added oils maintains the pure Omega-3 profile." },
+      "hamburger": { cal: 500, pro: 25, car: 40, fat: 26, alt: "Turkey Burger on Lettuce Wrap", why: "Reduces saturated fat and eliminates refined flour carbs." },
+      "hot_dog": { cal: 290, pro: 10, car: 22, fat: 17, alt: "Chicken Sausage on Whole Wheat", why: "Leaner protein source and adds dietary fiber." },
+      "ice_cream": { cal: 270, pro: 5, car: 32, fat: 14, alt: "Frozen Greek Yogurt", why: "Doubles the protein and halves the fat content." },
+      "omelette": { cal: 210, pro: 14, car: 2, fat: 16, alt: "Egg White Spinach Omelette", why: "Zero cholesterol, heavily reduced fat, and added iron." },
+      "pancakes": { cal: 350, pro: 8, car: 60, fat: 10, alt: "Oat & Banana Protein Pancakes", why: "Replaces empty flour carbs with complex oats and protein." },
+      "pasta_carbonara": { cal: 600, pro: 20, car: 65, fat: 30, alt: "Zucchini Noodles with Pesto", why: "Slashes heavy pasta carbs and cream-based fats." },
+      "pizza": { cal: 285, pro: 12, car: 36, fat: 10, alt: "Cauliflower Crust Thin Pizza", why: "Massively reduces carbohydrates and gluten footprint." },
+      "ramen": { cal: 450, pro: 15, car: 60, fat: 18, alt: "Soba Noodle Bone Broth Soup", why: "Buckwheat adds fiber and bone broth boosts collagen." },
+      "steak": { cal: 650, pro: 50, car: 0, fat: 48, alt: "Lean Sirloin or Flank Steak", why: "Provides the same high protein with half the saturated fat." },
+      "sushi": { cal: 300, pro: 12, car: 60, fat: 2, alt: "Sashimi with Cucumber Salad", why: "Removes white rice sugar spikes for pure protein." },
+      "tacos": { cal: 220, pro: 12, car: 20, fat: 10, alt: "Black Bean & Corn Lettuce Tacos", why: "Boosts plant fiber and eliminates fried tortilla calories." },
+      "waffles": { cal: 400, pro: 8, car: 55, fat: 18, alt: "Whole Grain Kodiak Waffles", why: "Triples the protein and adds necessary digestive fiber." },
+      "club_sandwich": { cal: 550, pro: 25, car: 50, fat: 25, alt: "Open-Faced Turkey Sandwich", why: "Cuts bread calories in half while keeping the lean meat." },
+      "donuts": { cal: 300, pro: 4, car: 35, fat: 15, alt: "Baked Apple Cider Donut", why: "Baking instead of deep-frying drastically lowers lipid count." },
+      "chicken_curry": { cal: 350, pro: 22, car: 12, fat: 24, alt: "Lentil Curry", why: "Boosts fiber and uses plant-based protein." },
+      "chicken_wings": { cal: 450, pro: 20, car: 5, fat: 35, alt: "Baked Cauliflower Wings", why: "Massively cuts fat while providing an antioxidant boost." }
+    };
+
+    let scanLog = [];
+    let stream = null;
+    let currentFile = null;
+    let currentB64 = null;
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-theme');
+      const btn = document.getElementById('themeBtn');
+      btn.textContent = document.body.classList.contains('dark-theme') ? '☀️' : '🌙';
+    }
+
+    function switchView(view) {
+      document.getElementById('btn-scan').classList.toggle('on', view === 'scan');
+      document.getElementById('btn-hist').classList.toggle('on', view === 'hist');
+      const scanPage = document.getElementById('page-scan');
+      const histPage = document.getElementById('page-hist');
+
+      if (view === 'scan') {
+        histPage.classList.remove('active'); scanPage.classList.add('active');
+      } else {
+        scanPage.classList.remove('active'); histPage.classList.add('active');
+        stopCam(); renderDashboard();
+      }
+    }
+
+    function startCam() {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => {
+        stream = s; document.getElementById('vid').srcObject = s;
+        document.getElementById('capBtn').disabled = false;
+        document.getElementById('startBtn').innerText = 'Camera Running';
+        document.getElementById('radar').classList.add('go');
+        document.getElementById('camIdle').style.display = 'none';
+      }).catch(e => alert('Camera access required.'));
+    }
+
+    function stopCam() {
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      document.getElementById('capBtn').disabled = true;
+      document.getElementById('startBtn').innerText = 'Start Camera';
+      document.getElementById('radar').classList.remove('go');
+      document.getElementById('camIdle').style.display = 'flex';
+    }
+
+    function doCapture() {
+      let v = document.getElementById('vid'), c = document.getElementById('cv');
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0);
+      let dataUrl = c.toDataURL('image/jpeg', 0.8);
+      runInference(dataUrl, dataUrl.split(',')[1], "Camera Capture");
+    }
+
+    function handleUpload(files) {
+      if (!files.length) return;
+      let r = new FileReader();
+      r.onload = e => {
+        currentFile = e.target.result; currentB64 = currentFile.split(',')[1];
+        document.getElementById('tg').innerHTML = `<img src="${currentFile}">`;
+        document.getElementById('anaBtn').disabled = false;
+      };
+      r.readAsDataURL(files[0]);
+    }
+
+    function analyzeFile() {
+      if (currentFile) runInference(currentFile, currentB64, "File Upload");
+    }
+
+    function runInference(imgSrc, b64Data, source) {
+      document.getElementById('scanResultArea').innerHTML = `<div class="empty-state"><div class="es-icon">⏳</div><h3>Analyzing Tensor Data...</h3></div>`;
+
+      fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: [{ b64: b64Data, name: source }] })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.error) {
+            throw new Error(data.error);
+        }
+        let topPred = data.results[0].predictions[0];
+        let className = topPred.raw || topPred.name.toLowerCase().replace(/ /g, "_");
+
+        // Use local DB to enrich CNN output
+        let dbData = FOOD_DB[className] || { cal: 0, pro: 0, car: 0, fat: 0, alt: "Not found", why: "No data for this class." };
+
+        const result = {
+          id: Date.now(), name: className.replace(/_/g, " "), conf: (topPred.conf).toFixed(1),
+          cal: dbData.cal, pro: dbData.pro, car: dbData.car, fat: dbData.fat,
+          alt: dbData.alt, why: dbData.why, img: imgSrc, source: source,
+          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        };
+
+        scanLog.unshift(result);
+        document.getElementById('histCount').innerText = scanLog.length;
+        renderResult(result);
+      })
+      .catch(err => {
+        document.getElementById('scanResultArea').innerHTML = `<div class="empty-state"><h3 style="color:var(--danger)">Inference Failed</h3><p>${err.message}</p><button class="btn btn-hollow" onclick="resetScan()" style="margin-top:20px;width:auto;">Reset</button></div>`;
+      });
+    }
+
+    function renderResult(result) {
+      document.getElementById('scanResultArea').innerHTML = `
+        <div class="result-hero emerge">
+          <img src="${result.img}" class="rh-banner">
+          <div class="rh-body">
+            <div class="rh-top">
+              <h2 class="rh-title">${result.name}</h2>
+              <div class="conf-badge">✓ ${result.conf}% Match</div>
+            </div>
+
+            <div class="macro-grid">
+              <div class="m-box"><div class="m-val">${result.cal}</div><div class="m-lbl">Kcal</div></div>
+              <div class="m-box"><div class="m-val" style="color:var(--primary);">${result.pro}g</div><div class="m-lbl">Protein</div></div>
+              <div class="m-box"><div class="m-val" style="color:var(--warning);">${result.car}g</div><div class="m-lbl">Carbs</div></div>
+              <div class="m-box"><div class="m-val" style="color:var(--danger);">${result.fat}g</div><div class="m-lbl">Fat</div></div>
+            </div>
+
+            <div class="alt-box">
+              <div class="alt-hd">🌱 Healthy Alternative</div>
+              <div class="alt-name">${result.alt}</div>
+              <div class="alt-desc">${result.why}</div>
+            </div>
+
+            <button class="btn btn-hollow" onclick="resetScan()">Clear & Scan Next</button>
+          </div>
+        </div>`;
+    }
+
+    function resetScan() {
+      currentFile = null; currentB64 = null;
+      document.getElementById('tg').innerHTML = '';
+      document.getElementById('anaBtn').disabled = true;
+      document.getElementById('scanResultArea').innerHTML = `<div class="empty-state emerge"><div class="es-icon">🥗</div><h3>Awaiting Input tensors</h3><p>Use the camera or upload an image to classify food.</p></div>`;
+    }
+
+    /* --- Dashboard & History Review --- */
+    function renderDashboard() {
+      let tCal = 0, tPro = 0, tCar = 0, tFat = 0;
+      scanLog.forEach(log => { tCal += log.cal; tPro += log.pro; tCar += log.car; tFat += log.fat; });
+
+      document.getElementById('st-cal').innerText = tCal;
+      document.getElementById('st-pro').innerText = tPro + 'g';
+      document.getElementById('st-car').innerText = tCar + 'g';
+      document.getElementById('st-fat').innerText = tFat + 'g';
+
+      const listDiv = document.getElementById('historyLogs');
+      if (scanLog.length === 0) { listDiv.innerHTML = '<div style="text-align:center; padding: 40px; color:var(--ink-muted);">No logs yet.</div>'; return; }
+
+      listDiv.innerHTML = scanLog.map((log, i) => `
+        <div class="h-item emerge" style="animation-delay: ${i * 0.05}s" onclick="viewPastScan(${log.id})">
+          <img src="${log.img}" class="h-thumb">
+          <div class="h-details">
+            <div class="h-name">${log.name}</div>
+            <div class="h-meta"><span>🕒 ${log.time}</span></div>
+          </div>
+          <div class="h-macros">
+            <div class="h-mac"><span class="hm-v">${log.cal}</span><span class="hm-l">Kcal</span></div>
+            <div class="h-mac"><span class="hm-v">${log.pro}g</span><span class="hm-l">Pro</span></div>
+            <div class="h-mac"><span class="hm-v">${log.car}g</span><span class="hm-l">Carbs</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function viewPastScan(id) {
+      const pastResult = scanLog.find(s => s.id === id);
+      if(pastResult) {
+        renderResult(pastResult);
+        switchView('scan');
+      }
+    }
+
+    function clearHistory() {
+      if(confirm('Erase all local inference logs?')) {
+        scanLog = []; document.getElementById('histCount').innerText = 0; renderDashboard();
+      }
+    }
+  </script>
+</body>
+</html>

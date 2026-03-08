@@ -1,0 +1,12 @@
+{
+  "chicken_curry": {"calories": 250, "protein": 20, "carbs": 10},
+  "chicken_wings": {"calories": 290, "protein": 24, "carbs": 0},
+  "fried_rice": {"calories": 163, "protein": 4, "carbs": 33},
+  "grilled_salmon": {"calories": 208, "protein": 20, "carbs": 0},
+  "hamburger": {"calories": 250, "protein": 12, "carbs": 30},
+  "ice_cream": {"calories": 207, "protein": 3, "carbs": 24},
+  "pizza": {"calories": 266, "protein": 11, "carbs": 33},
+  "ramen": {"calories": 436, "protein": 15, "carbs": 58},
+  "steak": {"calories": 271, "protein": 25, "carbs": 0},
+  "sushi": {"calories": 136, "protein": 4, "carbs": 29}
+}
